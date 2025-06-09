@@ -44,7 +44,8 @@ const SkyNavigator: React.FC = () => {
   const gameHeight = 600;
   const keys = useRef({ left: false, right: false });
 
-  // Adjust game width on screen resize
+  const gameOverSoundRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
     const updateSize = () => {
       const screenWidth = window.innerWidth;
@@ -91,7 +92,7 @@ const SkyNavigator: React.FC = () => {
 
   const createBuildingPair = useCallback(
     (id: number, yPos: number): Building[] => {
-      const minGapWidth = 140 + level * 10; 
+      const minGapWidth = 140 + level * 10;
       const maxGapWidth = 180 + level * 15;
       const gapWidth =
         minGapWidth + Math.random() * (maxGapWidth - minGapWidth);
@@ -178,7 +179,7 @@ const SkyNavigator: React.FC = () => {
     const moveLoop = setInterval(() => {
       setPlane((prev) => {
         let newX = prev.x;
-        const moveSpeed = 6 + level * 0.5; 
+        const moveSpeed = 6 + level * 0.5;
         if (keys.current.left) newX = Math.max(0, newX - moveSpeed);
         if (keys.current.right)
           newX = Math.min(gameWidth - prev.width, newX + moveSpeed);
@@ -203,7 +204,7 @@ const SkyNavigator: React.FC = () => {
             (acc, b) => (b.y < acc.y ? b : acc),
             filtered[0]
           );
-          const newY = last ? last.y - (300 - level * 10) : -150; 
+          const newY = last ? last.y - (300 - level * 10) : -150;
           filtered.push(...createBuildingPair(Date.now(), newY));
         }
         return filtered;
@@ -260,34 +261,16 @@ const SkyNavigator: React.FC = () => {
     if (newScore !== score) setScore(newScore);
   }, [plane, buildings, gameStarted, gameOver, score]);
 
-  const getBuildingColor = (type: string) => {
-    switch (type) {
-      case "skyscraper":
-        return "bg-gray-700";
-      case "tower":
-        return "bg-blue-600";
-      case "office":
-        return "bg-green-600";
-      default:
-        return "bg-gray-600";
+  useEffect(() => {
+    if (gameOver) {
+      gameOverSoundRef.current?.play();
     }
-  };
-
-  const getBuildingPattern = (type: string) => {
-    switch (type) {
-      case "skyscraper":
-        return "linear-gradient(45deg, #374151 25%, transparent 25%, transparent 75%, #374151 75%, #374151), linear-gradient(45deg, #374151 25%, transparent 25%, transparent 75%, #374151 75%, #374151)";
-      case "tower":
-        return "repeating-linear-gradient(0deg, #2563eb, #2563eb 10px, #3b82f6 10px, #3b82f6 20px)";
-      case "office":
-        return "repeating-linear-gradient(90deg, #16a34a, #16a34a 15px, #22c55e 15px, #22c55e 30px)";
-      default:
-        return "none";
-    }
-  };
+  }, [gameOver]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-blue-200 p-4 relative overflow-hidden">
+      <audio ref={gameOverSoundRef} src="/gameover.mp3" preload="auto" />
+
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         {[...Array(6)].map((_, i) => (
           <div
@@ -393,7 +376,7 @@ const SkyNavigator: React.FC = () => {
         <DialogContent className="bg-white">
           <DialogHeader>
             <DialogTitle className="text-2xl text-center">
-            GREAT JOB MR.TERRORIST
+              GREAT JOB MR.TERRORIST
             </DialogTitle>
             <DialogDescription className="text-center text-lg">
               Great flying, muhammid! You just Bombed {score} people!
